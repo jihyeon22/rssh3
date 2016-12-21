@@ -1,16 +1,20 @@
 #pragma once
 
-#define DROPBEAR_SERVER_PATH	"/data/mds/usr/bin/dbclient"
+#define CONCAT_STR(X, Y)		X Y
+#define SYSTEM_DIR				"/system/mds"
+
+
+#define DROPBEAR_SERVER_PATH	CONCAT_STR(SYSTEM_DIR, "/usr/bin/dbclient")
 #define DROPBEAR_PORT			1022
 #define SERVER_LOGIN_ID			"administrator"
 
-#define SERVER_RSA_PATH_DIR		"/data/mds/.ssh"
-#define SERVER_RSA_PATH			"/data/mds/.ssh/id_rsa"
+#define SERVER_RSA_PATH_DIR		CONCAT_STR(SYSTEM_DIR, "/.ssh")
+#define SERVER_RSA_PATH			CONCAT_STR(SYSTEM_DIR, "/.ssh/id_rsa")
 
-#define DROPBEAR_CLIENT_PATH	"/data/mds/usr/bin/dbclient"
+#define DROPBEAR_CLIENT_PATH	CONCAT_STR(SYSTEM_DIR, "/usr/bin/dbclient")
 
-#define FTPSCRIPT_PATH_DIR		"/data/mds/.ftp"
-#define FTPSCRIPT_PATH			"/data/mds/.ftp/ftp_script.sh" 
+#define FTPSCRIPT_PATH_DIR		CONCAT_STR(SYSTEM_DIR, "/.ftp")
+#define FTPSCRIPT_PATH			CONCAT_STR(SYSTEM_DIR, "/.ftp/ftp_script.sh")
 
 /////////////////////////////////////////////////////////////////////////
 //Server Connection Infomation

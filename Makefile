@@ -31,10 +31,10 @@ CFLAGS	+= -DBOARD_$(BOARD)
 # Target rules
 
 CFLAGS	+= 
-LDFLAGS	+=  -lpthread -lat2 -llogd
+LDFLAGS	+=  -lpthread -lat3 -llogd
 
 OBJS	:= src/rssh.o src/network.o src/rsa_ftp.o
-APP	:= rssh2
+APP	:= rssh3
 
 all: all-before	$(APP)
 
