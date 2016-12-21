@@ -141,8 +141,8 @@ int main(int argc, char* argv[])
 
 	logd_init();
 
-	//ret = at_open(e_DEV_TX500, NULL, NULL, "/tmp/rssi_at.log");	//file debug msg
-	//ret = at_open(e_DEV_TX500, NULL, NULL, "console");			//console debug msg
+	//ret = at_open(e_DEV_TX501_BASE, NULL, NULL, "/tmp/rssi_at.log");	//file debug msg
+	//ret = at_open(e_DEV_TX501_BASE, NULL, NULL, "console");			//console debug msg
 	ret = at_open(e_DEV_TX501_BASE, NULL, NULL, NULL);					//no debug msg
 	// --------------------------------------------
 	// std input / output init, redirect

@@ -23,7 +23,7 @@
 #define SERVER_FTP_PORT			"21"
 #define SERVER_FTP_ID			"openm2m"
 #define SERVER_FTP_PASSWORD		"openm2m.open"
-#define SERVER_FTP_SSH_KEY_FILE	"/home/rsa_keys/TX500/%s/.ssh/"
+#define SERVER_FTP_SSH_KEY_FILE	"/home/rsa_keys/TX501/%s/.ssh/"
 
 
 //#define MDMC_CMD_PPP_UP     "pppd /dev/smd0"                              
