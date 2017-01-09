@@ -34,4 +34,4 @@
 
 #define AT_DEV_FILE				"/dev/smd8"
 
-#define AT_LIB_TARGET_DEV   e_DEV_TX501_BASE
+#define AT_LIB_TARGET_DEV   e_DEV_TL500_BASE
