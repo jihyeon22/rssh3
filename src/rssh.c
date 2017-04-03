@@ -24,10 +24,13 @@ struct option   long_opt[] =
   {"help",		no_argument,		NULL,	'h'},
   {"port",		required_argument,	NULL,	's'},
   {"server",	required_argument,	NULL,	'p'},
+  {"target_ssh_port",	required_argument,	NULL,	't'},
   {NULL,		0,					NULL,	0  }
 };
 
-const char	* short_opt = "hs:p:";
+const char	* short_opt = "hs:p:t:";
+
+#define LOG_TARGET eSVC_COMMON
 
 // ========================================================
 //  ssh info for connect to server.
@@ -39,6 +42,7 @@ typedef struct ssh_tunnel_info
 	char server_port[16];
 	char server_login_id[128];
 	char server_rsa_path[256];
+	char server_target_ssh_port[16];
 	char check_cmd[256];
 }SSH_TUNNEL_INFO_T;
 
@@ -55,6 +59,8 @@ void set_ssh_info(SSH_TUNNEL_INFO_T* ssh_info)
 	// get from argument : 30010
 	strcpy(ssh_info->server_port,"null");
 	//ssh_info->server_port = 30010;
+
+	strcpy(ssh_info->server_target_ssh_port,"null");
 
 	// set server login id
 	strcpy(ssh_info->server_login_id,SERVER_LOGIN_ID);
@@ -129,7 +135,8 @@ int main(int argc, char* argv[])
 	char cmd_buff[256]={0,};
 	char cmd_return[512]={0,};
 	
-	pid_t pid;
+	int pid, sid;
+	int count = 0;
 
 	SSH_TUNNEL_INFO_T ssh_info = {0,};
 	FTP_SERVER svr={0,};
@@ -139,7 +146,18 @@ int main(int argc, char* argv[])
 	
 	pthread_t p_thread1;
 
+	int i = 0;
+	int str_len = 0;
+
 	logd_init();
+
+	for ( i = 0 ; i < argc ; i++ )
+		str_len += sprintf(cmd_buff + str_len, "%s ", argv[i]);
+
+	LOGI(LOG_TARGET, "[rssh3] input command [%s] \n", cmd_buff);
+	memset(cmd_buff, 0x00, 256);
+
+	
 
 	//ret = at_open(e_DEV_TX501_BASE, NULL, NULL, "/tmp/rssi_at.log");	//file debug msg
 	//ret = at_open(e_DEV_TX501_BASE, NULL, NULL, "console");			//console debug msg
@@ -156,8 +174,7 @@ int main(int argc, char* argv[])
 	stdout = freopen("/dev/null", "w", stdout);
 	stderr = freopen("/dev/null", "rw", stderr);
 //*/	
-	printf("r_ssh program start \r\n");
-	
+
 	// --------------------------------------------
 	// kill already run dbclient process 
 	// --------------------------------------------
@@ -193,15 +210,22 @@ int main(int argc, char* argv[])
 
 			case 'p':
 			{
-				printf("\t get arg : port is \"%s\"\n", optarg);
+				LOGI(LOG_TARGET, "\t get arg : port is \"%s\"\n", optarg);
 				strcpy(ssh_info.server_port, optarg);
 				break;
 			}
 
 			case 's':
 			{
-				printf("\t get arg : server is \"%s\"\n", optarg);
+				LOGI(LOG_TARGET, "\t get arg : server is \"%s\"\n", optarg);
 				strcpy(ssh_info.server_addr, optarg);
+				break;
+			}
+
+			case 't':
+			{
+				LOGI(LOG_TARGET, "\t get arg : server target ssh port is \"%s\"\n", optarg);
+				strcpy(ssh_info.server_target_ssh_port, optarg);
 				break;
 			}
 
@@ -223,7 +247,7 @@ int main(int argc, char* argv[])
 			}
 			default:
 			{
-				fprintf(stderr, "%s: invalid option -- %c\n", argv[0], c);
+				LOGE(LOG_TARGET, "%s: invalid option -- %c\n", argv[0], c);
 				fprintf(stderr, "Try `%s --help' for more information.\n", argv[0]);
 				return (-2);
 			}
@@ -235,13 +259,13 @@ int main(int argc, char* argv[])
 	// --------------------------------------------
 	if ( !strcmp(ssh_info.server_addr,"null") )
 	{	
-		printf("need more argument : port and server info\r\n");
+		LOGE(LOG_TARGET, "need more argument : port and server info\r\n");
 		exit(0);
 	}
 	
 	if ( !strcmp(ssh_info.server_port,"null") )
 	{
-		printf("need more argument : port and server info\r\n");
+		LOGE(LOG_TARGET, "need more argument : port and server info\r\n");
 		exit(0);
 	}
 	
@@ -249,14 +273,26 @@ int main(int argc, char* argv[])
     // --------------------------------------------
 	// make daemon...
 	// --------------------------------------------
-	if( (pid = fork()) < 0) {
-		    exit(0);
-	} else if(pid != 0) {
-		    exit(0);
+	// make deamon Process...
+	pid = fork();
+	while (pid < 0 )
+	{
+		perror("fork error : ");
+		pid = fork();
+		if (count == 10)
+			exit(0);
+		sleep(10);
+		count++;
 	}
+	if (pid > 0)
+		exit(EXIT_SUCCESS);
 
-	signal(SIGHUP, SIG_IGN);
-	setsid();
+	sid = setsid();
+	if (sid < 0)
+		exit(EXIT_FAILURE);
+
+	chdir("/");
+
 
 	// --------------------------------------------
 	// program start : init network thread
@@ -291,16 +327,17 @@ int main(int argc, char* argv[])
 			ssh_info.check_cmd);
 #else	// not use tty console, back ground
 	sprintf(cmd_buff,
-			"%s -y -I 600 -f -N -R %s:localhost:%d %s@%s -i %s &",
+			"%s -y -I 600 -f -N -R %s:localhost:%d -p %s %s@%s -i %s&",
 			DROPBEAR_CLIENT_PATH,
 			ssh_info.server_port,
 			ssh_info.dropbear_port,
+			ssh_info.server_target_ssh_port,
 			ssh_info.server_login_id,
 			ssh_info.server_addr,
 			ssh_info.server_rsa_path);
 #endif
 
-	printf("run dbclient cmd is [%s]\r\n",cmd_buff);
+	LOGI(LOG_TARGET, "[rssh3] run dbclient cmd is [%s]\r\n",cmd_buff);
 	
 	//printf("run cmd is [%s]\r\n",cmd_buff);
 	//system("dbclient -f -N -R 30010:localhost:1022 administrator@219.251.4.177 -i ~/.ssh/id_rsa");
@@ -320,6 +357,6 @@ int main(int argc, char* argv[])
 	remove_rsa_file();
 	remove_ftp_script();
 	
-	printf("program end : bye bye ~~\r\n");
+	LOGT(LOG_TARGET, "[rssh3] program end : bye bye ~~\r\n");
 	exit(0);
 }
